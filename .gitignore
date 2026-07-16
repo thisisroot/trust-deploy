@@ -1,0 +1,15 @@
+# Local config / secrets — never commit
+.env
+.env.*
+!.env.example
+config/**/local.*
+*.local
+
+# Runtime data / volumes
+data/
+volumes/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
