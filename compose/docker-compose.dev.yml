@@ -1,0 +1,37 @@
+# Local development dependencies for Trust.
+#
+# Brings up just the backing services the server needs during development; trust-server and the
+# Flutter client run natively on the host. The full production stack (server image, object
+# storage, SFU, reverse proxy) is a separate compose file added later.
+#
+#   docker compose -f compose/docker-compose.dev.yml up -d
+#
+# Then, from trust-server/:
+#   TRUST_DATABASE_URL=postgres://trust:trust@localhost:5432/trust cargo run
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: trust
+      POSTGRES_PASSWORD: trust
+      POSTGRES_DB: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - trust_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trust -d trust"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Present now (behind the RealtimeBus trait's future Redis impl) but not required for the
+  # single-node dev loop. Uncomment when the Redis-backed bus lands.
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+
+volumes:
+  trust_pgdata:

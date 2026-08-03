@@ -1,0 +1,34 @@
+# Trust server as a managed service. Install to /etc/systemd/system/trust-server.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now trust-server
+#   journalctl -u trust-server -f     # logs
+[Unit]
+Description=Trust server (axum HTTP + WebSocket)
+After=network.target
+
+[Service]
+User=trust
+Group=trust
+WorkingDirectory=/opt/trust-server
+
+# In-memory store, snapshotted to disk so accounts/chats survive restarts.
+# Bind to localhost only — nginx is the public entrypoint (TLS terminates there).
+Environment=TRUST_STORE=memory
+Environment=TRUST_BIND_ADDR=127.0.0.1:8080
+Environment=TRUST_DATA_DIR=/var/lib/trust
+# Quieter logs in production; raise to debug when diagnosing.
+Environment=RUST_LOG=info
+
+ExecStart=/opt/trust-server/trust-server
+Restart=on-failure
+RestartSec=3
+
+# Hardening — the service only needs to write its data dir.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/trust
+
+[Install]
+WantedBy=multi-user.target
